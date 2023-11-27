@@ -1,0 +1,123 @@
+//------------------------------------------------------------------------------------------------------------------//
+
+#include <PID_v1.h>
+#include <Encoder.h>
+/*
+#include <Ethernet.h>                               //Load Ethernet Library
+#include <EthernetUdp.h>                            //Load the Udp Library
+#include <SPI.h>                                    //Load SPI Library
+#include "Wire.h"                                   //imports the wire library
+*/
+
+//------------------------------------------------------------------------------------------------------------------//
+
+/*
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+IPAddress ArduinoIP(255, 255, 255, 0); // set subnet mask to match your network
+unsigned int localPort = 9000; // Assign quea port to talk over
+char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //dimensian a char array to hold our data packet
+String datReq; //String for our data
+int packetSize; //Size of the packet
+EthernetUDP Udp; // Create a UDP Object
+*/
+
+//Pines del Motor
+const int motorEncoderAPin = 2;         // Pin A del Encoder del motor
+const int motorEncoderBPin = 3;         // Pin B del Encoder del motor
+const int motorSpeedPin = 9;       // Pin PWM para controlar la velocidad del motor
+const int motorDirection1Pin = 6;  // Pin 1 para controlar la dirección del motor
+const int motorDirection2Pin = 7;  // Pin 2 para controlar la dirección del motor
+
+//Pines de los encoders externos
+//const int leftEncoderAPin = 8;         // Pin A del Encoder izquierdo
+//const int leftEncoderBPin = 10;         // Pin B del Encoder izquierdo
+
+//const int rigthEncoderAPin = 11;         // Pin A del Encoder derecho
+//const int rightEncoderBPin = 12;         // Pin B del Encoder derecho
+
+Encoder encoder_motor(motorEncoderAPin, motorEncoderBPin);
+//Encoder encoder_left(leftEncoderAPin, leftEncoderBPin);
+//Encoder encoder_right(rigthEncoderAPin, rightEncoderBPin);
+double input, output, setpoint, setpointviejo, left_inputb, right_inputb;
+PID pid(&input, &output, &setpoint, 2.2, 0.5, 0.05, DIRECT);
+
+//------------------------------------------------------------------------------------------------------------------//
+
+void setup() {
+  pinMode(motorEncoderAPin, INPUT_PULLUP);
+  pinMode(motorEncoderBPin, INPUT_PULLUP);
+  pinMode(motorSpeedPin, OUTPUT);
+  pinMode(motorDirection1Pin, OUTPUT);
+  pinMode(motorDirection2Pin, OUTPUT);
+//  pinMode(leftEncoderAPin, INPUT_PULLUP);
+//  pinMode(leftEncoderBPin, INPUT_PULLUP);
+//  pinMode(rigthEncoderAPin, INPUT_PULLUP);
+//  pinMode(rightEncoderBPin, INPUT_PULLUP);
+
+  Serial.begin(9600); //Initialize Serial Port 
+/*  Ethernet.begin( mac, ip); //Inialize the Ethernet
+  Udp.begin(localPort); //Initialize Udp
+  delay(1500); //delay 
+  Serial.println(Ethernet.localIP());
+*/
+  // Inicializa el valor objetivo
+  setpoint = 9600; // Valor objetivo inicial
+
+  // Configura los límites de salida del PID
+  pid.SetOutputLimits(-255, 255);
+  pid.SetMode(AUTOMATIC);
+}
+
+//------------------------------------------------------------------------------------------------------------------//
+
+void loop() {
+  // Lee la posición actual del codificador
+  input = encoder_motor.read();
+  input = input*40;
+  // Calcula la salida del controlador PID
+  pid.Compute();
+
+//  left_inputb = encoder_left.read();
+//  right_inputb = encoder_right.read();
+
+  // Controla la dirección del motor
+  if (setpoint > input) {
+    digitalWrite(motorDirection1Pin, HIGH);
+    digitalWrite(motorDirection2Pin, LOW);  
+  } else {
+    digitalWrite(motorDirection1Pin, LOW);
+    digitalWrite(motorDirection2Pin, HIGH);
+  }
+
+/*  if((abs(input)/abs(setpoint))>0.95 && (abs(input)/abs(setpoint))<1.05){
+    digitalWrite(motorDirection1Pin, LOW);
+    digitalWrite(motorDirection2Pin, LOW);
+  }
+*/  
+  // Controla la velocidad del motor usando PWM
+  analogWrite(motorSpeedPin, abs(output));
+
+  // Verifica si hay datos disponibles en el Monitor Serie
+  if (Serial.available()) {
+    // Lee el valor ingresado desde el Monitor Serie
+    setpoint = Serial.parseFloat();
+    if(setpoint==0){
+      setpoint= setpointviejo;
+    }
+    Serial.print("Nuevo valor objetivo: ");
+    Serial.println(setpoint);
+    delay(1200);
+    setpointviejo=setpoint;
+  }
+
+
+  // Imprime información de depuración
+  Serial.print("Target: ");
+  Serial.print(setpoint);
+  Serial.print(", Current: ");
+  Serial.print(input);
+  Serial.print(", Motor Speed: ");
+  Serial.println(output);
+
+  delay(300); // Ajusta la frecuencia de actualización según sea necesario
+}
