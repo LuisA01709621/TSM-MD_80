@@ -5,3 +5,5 @@ This proyect was part of the class MR2006B.501 for 5th Semester of Mecathronics 
   -Luis Carlos Niño Cabello
   -Raúl Héctor Fuentes Hernández
   -Ailyn Gabriela Rodríguez Zuñiga 
+
+  All the designs for the proyect are under this link: https://drive.google.com/drive/folders/1ON8S4_SzyYToMLwOB2jT-f_irfkITWkK?usp=sharing
