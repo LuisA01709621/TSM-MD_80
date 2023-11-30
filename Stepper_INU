@@ -1,1 +1,49 @@
-Lorem Ipsum
+#include <AccelStepper.h>
+
+// Define los pines para el control del motor paso a paso
+#define STEP_PIN 2
+#define DIR_PIN 3
+
+// Define los pines del encoder
+#define ENCODER_A 4
+#define ENCODER_B 5
+
+// Crea un objeto de la clase AccelStepper
+AccelStepper stepper(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+
+// Variables para almacenar el estado del encoder
+int encoderPos = 0;
+int lastEncoderPos = 0;
+
+void setup() {
+  // Establece la velocidad máxima y la aceleración del motor
+  stepper.setMaxSpeed(1000);
+  stepper.setAcceleration(500);
+
+  // Configura los pines del encoder como entrada
+  pinMode(ENCODER_A, INPUT);
+  pinMode(ENCODER_B, INPUT);
+
+  // Lee el estado inicial del encoder
+  lastEncoderPos = digitalRead(ENCODER_A) ^ digitalRead(ENCODER_B) << 1;
+}
+
+void loop() {
+  // Lee el estado actual del encoder
+  encoderPos = digitalRead(ENCODER_A) ^ digitalRead(ENCODER_B) << 1;
+
+  // Compara el valor actual con el valor anterior
+  if (encoderPos > lastEncoderPos) {
+    // Incrementa la velocidad del motor
+    stepper.setSpeed(stepper.speed() + 10);
+  } else if (encoderPos < lastEncoderPos) {
+    // Decrementa la velocidad del motor
+    stepper.setSpeed(stepper.speed() - 10);
+  }
+
+  // Actualiza la posición anterior del encoder
+  lastEncoderPos = encoderPos;
+
+  // Gira el motor en un sentido
+  stepper.runSpeed();
+}
